@@ -1,6 +1,6 @@
 # vibe_app
 
-Vibe Sports Labs - Plataforma de eventos esportivos
+Vibe Sports Labs - Plataforma de eventos esportivos teste
 
 ## Getting Started
 
