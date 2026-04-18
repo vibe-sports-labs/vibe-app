@@ -1,26 +1,21 @@
 import 'package:dio/dio.dart';
+import 'package:logger/logger.dart';
+import 'package:vibe_app/core/di/service_locator.dart';
+import '../core/network/dio_client.dart';
 import '../models/match_model.dart';
-import '../core/constants.dart';
 
 class MatchService {
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: ApiConstants.baseUrl,
-      connectTimeout: ApiConstants.connectTimeout,
-      receiveTimeout: ApiConstants.receiveTimeout,
-      headers: {'Content-Type': 'application/json'},
-    ),
-  );
+  final _dio = getIt<DioClient>().instance;
+  final Logger _logger = getIt<Logger>();
 
-  // Busca partidas próximas usando as coordenadas do GPS
   Future<List<MatchModel>> getNearbyMatches({
     required double lat,
     required double lng,
-    double distanceMeters = 5000, // Raio de 5km (Padrão Curitiba)
+    double distanceMeters = 5000,
   }) async {
     try {
       final response = await _dio.get(
-        '/matches/nearby',
+        '/v1/matches/nearby',
         queryParameters: {
           'latitude': lat,
           'longitude': lng,
@@ -28,23 +23,14 @@ class MatchService {
         }
       );
 
-      print("✅ Status Code: ${response.statusCode}");
-      print("📦 Dados Recebidos: ${response.data}");
-
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        // Mapeia o JSON para a nossa MatchModel.dart
         return data.map((json) => MatchModel.fromJson(json)).toList();
       }
-      return [];
     } on DioException catch (e) {
-      // Como referência técnica, trate os erros de rede de forma clara
-      print("❌ Erro na API Vibe: ${e.message}");
-      if (e.type == DioExceptionType.connectionError) {
-        print("⚠️ Verifique se o Spring Boot está rodando no IntelliJ!");
-      }
-      return [];
+      _logger.e("Erro ao buscar partidas próximas: ${e.message}");
     }
+    return [];
   }
 
   // Método para criar uma partida (POST) direto do App
@@ -54,7 +40,7 @@ class MatchService {
       // Por enquanto, vamos focar na busca para ver os pins no mapa.
       return null;
     } catch (e) {
-      print("❌ Erro ao criar partida: $e");
+      _logger.e("❌ Erro ao criar partida: $e");
       return null;
     }
   }
